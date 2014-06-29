@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require_relative '../lib/transcoder'
+
+Transcoder::CLI.new(ARGV).run

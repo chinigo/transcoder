@@ -3,9 +3,13 @@ require 'dotenv'
 Dotenv.load('.env.local') if File.exists?('.env.local')
 
 module Transcoder
-  Config = {
-    handbrake: {
-      executable: ENV['HANDBRAKE_EXECUTABLE']
-    }
-  }
+
+  def self.config
+    OpenStruct.new(
+      ffmpeg: OpenStruct.new(
+        executable: ENV['FFMPEG_EXECUTABLE']
+      )
+    )
+  end
+
 end
