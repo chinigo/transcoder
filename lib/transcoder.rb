@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require_relative 'transcoder/config'
-require_relative 'transcoder/cli'
-
 module Transcoder; end
+
+Dir.glob("#{File.expand_path(File.dirname(__FILE__))}/**/*.rb").each {|f| require f}
