@@ -1,5 +1,3 @@
-require 'optparse'
-
 module Transcoder
   class CLI < Struct.new(:arguments)
 

@@ -1,6 +1,3 @@
-require 'open3'
-require 'shellwords'
-
 module Transcoder
   class FFmpeg
 

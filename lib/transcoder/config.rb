@@ -1,5 +1,3 @@
-require 'dotenv'
-
 Dotenv.load('.env.local') if File.exists?('.env.local')
 
 module Transcoder
