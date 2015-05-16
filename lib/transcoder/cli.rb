@@ -1,82 +1,83 @@
 module Transcoder
-  class CLI < Struct.new(:arguments)
+  class CLI < Struct.new(:argv)
 
     def run
+      begin
+        parser.parse(argv)
+
+        display_help if options.help
+
+        validate_arguments
+
+      rescue OptionParser::ParseError, BadArgument => e
+        puts "#{e.message}\n\n"
+        display_help
+      end
     end
 
     private
+
 
     # Can't throw a MissingArgument b/c any ::ParseError is caught by OptionParser
     class BadArgument < Exception; end
 
 
+    def display_help
+      puts parser
+      exit(1)
+    end
+
+
+    def validate_arguments
+      raise OptionParser::MissingArgument.new('--output') unless options.output_directory
+      raise OptionParser::MissingArgument.new('--input') unless options.input_path
+    end
+
+
     def options
-      unless @__options
-
-        @__options = OpenStruct.new(
-          confirm:           false,
-          input_directory:   nil,
-          output_directory:  nil,
-          subtitles:         true
+      @__options ||=
+        OpenStruct.new(
+          input_path:   nil,
+          output_directory:  nil
         )
+    end
 
-        parser = OptionParser.new do |opts|
-          opts.banner = "Transcode video files to a standard format.\n\n" +
-            "Usage: transcode [OPTIONS] -i path/to/sources -o path/to/destination\n\n"
 
-          opts.on('-c', '--confirm', 'Confirm each transcode.') do |confirm|
-            @__options.confirm = confirm
-          end
+    def parser
+      @__parser ||= OptionParser.new do |opts|
+        opts.banner = "Transcode video files to a standard format.\n\n" +
+          "Usage: transcoder [OPTIONS] -i path/to/sources -o path/to/destination\n\n"
 
-          opts.on('-i', '--input=MANDATORY', 'Directory containing source video files.') do |input_directory|
-            validate_directory(input_directory)
-            @__options.input_directory = input_directory
-          end
-
-          opts.on('-o', '--output=MANDATORY', 'Directory to place the transcoded video files.') do |output_directory|
-            validate_directory(output_directory)
-            @__options.output_directory = output_directory
-          end
-
-          opts.on('-s', '--[no-]subtitles', 'Add any found subtitles to their corresponding. Default: true.') do |subtitles|
-            @__options.subtitles = subtitles
-          end
-
-          opts.on('--help', 'Display this help message.') do |help|
-            @__options.help = help
-          end
+        opts.on('-i', '--input=MANDATORY', 'Video file or directory containing video files.') do |input_path|
+          validate_exists(input_path)
+          options.input_path = input_path
         end
 
-        if options.help
-          puts parser
-          exit(0)
+        opts.on('-o', '--output=MANDATORY', 'Directory to place the transcoded video files.') do |output_directory|
+          validate_exists(output_directory)
+          validate_writeable(output_directory)
+          options.output_directory = output_directory
         end
 
-        begin
-          parser.parse(arguments)
-
-          raise OptionParser::MissingArgument.new('--output') unless options.output_directory
-          raise OptionParser::MissingArgument.new('--input') unless options.input_directory
-
-        rescue OptionParser::ParseError, BadArgument => e
-          puts "#{e.message}.\n\n"
-          exit(1)
+        opts.on('--help', 'Display this help message.') do |help|
+          options.help = help
         end
       end
-
-      @__options
-    end # options
+    end
 
 
-    def validate_directory(directory)
-      if directory == '' || !File.directory?( File.expand_path(directory) )
-        raise BadArgument.new("Invalid argument: #{directory} is not a directory")
+    def validate_exists(path)
+      if path == '' || !File.expand_path(path)
+        raise BadArgument.new("Invalid argument: #{path} does not exist.")
       end
+    end
 
+
+    def validate_writeable(directory)
       if !File.writable?( File.expand_path(directory) )
-        raise BadArgument.new("Invalid argument: #{directory} is not writeable")
+        raise BadArgument.new("Invalid argument: #{directory} is not writeable.")
       end
-    end # validate_directory
+    end
 
   end # CLI
 end # Transcoder
